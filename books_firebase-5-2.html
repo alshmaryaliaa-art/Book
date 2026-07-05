@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>منصة متابعة الكتب</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap');
+:root{
+  --primary:#1a3a5c;--accent:#00b4d8;--accent2:#0077b6;
+  --bg:#f0f4f8;--card:#fff;--text:#1e293b;--muted:#64748b;--border:#e2e8f0;
+  --sw:260px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+/* LOGIN */
+#loginScreen{position:fixed;inset:0;z-index:1000;background:linear-gradient(135deg,#1a3a5c,#0077b6 50%,#00b4d8);display:flex;align-items:center;justify-content:center;}
+.lbox{background:#fff;border-radius:22px;padding:40px 34px;width:410px;max-width:93vw;box-shadow:0 25px 60px rgba(0,0,0,.3);text-align:center;}
+.llogo{width:74px;height:74px;background:linear-gradient(135deg,#1a3a5c,#00b4d8);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:34px;}
+.lbox h1{font-size:20px;font-weight:800;color:var(--primary);margin-bottom:4px;}
+.lbox .sub{color:var(--muted);font-size:12px;margin-bottom:22px;}
+.lbox select,.lbox input{width:100%;padding:11px 14px;border:2px solid var(--border);border-radius:10px;font-family:'Tajawal',sans-serif;font-size:14px;margin-bottom:11px;outline:none;color:var(--text);transition:border-color .2s;}
+.lbox select:focus,.lbox input:focus{border-color:var(--accent);}
+.lbtn{width:100%;padding:12px;background:linear-gradient(135deg,#1a3a5c,#0077b6);color:#fff;border:none;border-radius:10px;font-family:'Tajawal',sans-serif;font-size:15px;font-weight:700;cursor:pointer;}
+.lbtn:hover{opacity:.9;}
+.lerr{color:#ef4444;font-size:12px;margin-top:6px;display:none;}
+.lhint{font-size:11px;color:var(--muted);margin-top:11px;}
+
+/* SYNC */
+#syncBar{position:fixed;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#00b4d8,#0077b6);z-index:9999;display:none;animation:pulse 1s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+#syncTip{position:fixed;top:10px;left:50%;transform:translateX(-50%);background:#1e293b;color:#fff;padding:6px 16px;border-radius:20px;font-size:11px;font-weight:600;z-index:9999;display:none;border-right:3px solid var(--accent);}
+
+/* APP */
+#app{display:none;min-height:100vh;}
+
+/* MOBILE TOPBAR */
+.topbar{display:none;position:fixed;top:0;left:0;right:0;height:56px;background:linear-gradient(135deg,#1a3a5c,#0d2440);z-index:200;align-items:center;justify-content:space-between;padding:0 16px;box-shadow:0 2px 12px rgba(0,0,0,.2);}
+.topbar h2{color:#fff;font-size:14px;font-weight:700;}
+.hamburger{background:none;border:none;cursor:pointer;color:#fff;font-size:22px;padding:4px;}
+.mob-add{background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;color:#fff;border-radius:8px;padding:7px 14px;font-family:'Tajawal',sans-serif;font-size:12px;font-weight:700;cursor:pointer;}
+
+/* OVERLAY */
+#sideOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:149;}
+
+/* SIDEBAR */
+.sidebar{width:var(--sw);background:linear-gradient(180deg,#1a3a5c,#0d2440);min-height:100vh;position:fixed;right:0;top:0;display:flex;flex-direction:column;box-shadow:-4px 0 20px rgba(0,0,0,.2);z-index:150;overflow-y:auto;transition:transform .3s ease;}
+.sh{padding:20px 15px 15px;border-bottom:1px solid rgba(255,255,255,.1);}
+.slogo{display:flex;align-items:center;gap:10px;}
+.sli{width:38px;height:38px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;}
+.slogo h2{color:#fff;font-size:13px;font-weight:700;line-height:1.3;}
+.slogo p{color:rgba(255,255,255,.45);font-size:10px;}
+.ubadge{margin:10px 11px;background:rgba(255,255,255,.08);border-radius:9px;padding:9px 11px;display:flex;align-items:center;gap:8px;}
+.uav{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#0077b6);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+.un{color:#fff;font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ur{color:rgba(255,255,255,.45);font-size:10px;}
+.fbs{display:flex;align-items:center;gap:5px;margin:0 11px 7px;background:rgba(0,180,216,.12);border:1px solid rgba(0,180,216,.25);border-radius:7px;padding:5px 9px;}
+.fdot{width:7px;height:7px;border-radius:50%;background:#22c55e;flex-shrink:0;animation:blink 2s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+.fdot.off{background:#ef4444;animation:none;}
+.fbs span{color:rgba(255,255,255,.65);font-size:10px;}
+.nsec{padding:5px 8px 2px;}
+.nlbl{color:rgba(255,255,255,.3);font-size:9px;font-weight:700;letter-spacing:1px;padding:0 7px 4px;text-transform:uppercase;}
+.nitem{display:flex;align-items:center;gap:8px;padding:8px 9px;border-radius:8px;cursor:pointer;color:rgba(255,255,255,.6);font-size:12px;font-weight:500;transition:all .2s;margin-bottom:1px;border:none;background:none;width:100%;text-align:right;}
+.nitem:hover{background:rgba(255,255,255,.08);color:#fff;}
+.nitem.active{background:linear-gradient(135deg,rgba(0,180,216,.22),rgba(0,119,182,.12));color:#fff;}
+.nitem .ni{font-size:15px;width:20px;text-align:center;}
+.nitem .nc{margin-right:auto;background:var(--accent);color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:20px;min-width:18px;text-align:center;}
+.sfooter{margin-top:auto;padding:11px;border-top:1px solid rgba(255,255,255,.1);}
+.logoutbtn{width:100%;padding:8px;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);color:#fca5a5;border-radius:8px;cursor:pointer;font-family:'Tajawal',sans-serif;font-size:12px;font-weight:600;}
+.logoutbtn:hover{background:rgba(239,68,68,.25);}
+
+/* MAIN */
+.main{margin-right:var(--sw);padding:24px;min-height:100vh;}
+.page{display:none;}
+.page.active{display:block;}
+.ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px;}
+.ph h1{font-size:20px;font-weight:800;color:var(--primary);}
+.ph p{color:var(--muted);font-size:12px;margin-top:2px;}
+.phbtns{display:flex;gap:7px;flex-wrap:wrap;}
+
+/* STATS */
+.sgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:11px;margin-bottom:20px;}
+.sc{background:var(--card);border-radius:12px;padding:15px;box-shadow:0 2px 8px rgba(0,0,0,.06);border-right:4px solid var(--accent);display:flex;flex-direction:column;gap:4px;}
+.sc .lbl{color:var(--muted);font-size:11px;font-weight:600;}
+.sc .val{font-size:26px;font-weight:800;color:var(--primary);}
+.sc .sub{font-size:10px;display:flex;gap:5px;flex-wrap:wrap;}
+.bdg{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;}
+.bs{background:#dcfce7;color:#16a34a;}
+.bw{background:#fef9c3;color:#ca8a04;}
+.bd{background:#fee2e2;color:#dc2626;}
+.bi{background:#e0f2fe;color:#0369a1;}
+
+/* CARD */
+.card{background:var(--card);border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.06);overflow:hidden;margin-bottom:18px;}
+.ch{padding:13px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,#f8fafc,#f1f5f9);}
+.ch h3{font-size:13px;font-weight:700;color:var(--primary);}
+.filt{display:flex;gap:7px;flex-wrap:wrap;padding:11px 18px;border-bottom:1px solid var(--border);}
+.filt input,.filt select{padding:6px 10px;border:1.5px solid var(--border);border-radius:6px;font-family:'Tajawal',sans-serif;font-size:11px;outline:none;color:var(--text);}
+.filt input:focus,.filt select:focus{border-color:var(--accent);}
+
+/* TABLE */
+table{width:100%;border-collapse:collapse;}
+th{background:#f8fafc;padding:8px 12px;font-size:10px;font-weight:700;color:var(--muted);text-align:right;border-bottom:2px solid var(--border);white-space:nowrap;}
+td{padding:10px 12px;font-size:11px;border-bottom:1px solid var(--border);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:#f8fafc;}
+.sbdg{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;}
+.s-منجز{background:#dcfce7;color:#16a34a;}
+.s-قيد-الإنجاز{background:#fef9c3;color:#ca8a04;}
+.type-وارد{background:#e0f2fe;color:#0369a1;}
+.type-صادر{background:#fce7f3;color:#be185d;}
+
+/* BUTTONS */
+.btn{padding:7px 14px;border-radius:7px;font-family:'Tajawal',sans-serif;font-size:12px;font-weight:600;cursor:pointer;border:none;transition:all .2s;display:inline-flex;align-items:center;gap:5px;}
+.btn-p{background:linear-gradient(135deg,#1a3a5c,#0077b6);color:#fff;}
+.btn-p:hover{opacity:.9;}
+.btn-sm{padding:4px 9px;font-size:11px;}
+.btn-w{background:#fef9c3;color:#ca8a04;border:1px solid #fde68a;}
+.btn-d{background:#fee2e2;color:#dc2626;border:1px solid #fecaca;}
+.btn-o{background:#fff;border:1.5px solid var(--border);color:var(--text);}
+.btn-g{background:#dcfce7;color:#16a34a;border:1px solid #bbf7d0;}
+
+/* MODAL */
+.moverlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+.moverlay.open{display:flex;}
+.modal{background:#fff;border-radius:16px;width:600px;max-width:96vw;max-height:92vh;overflow-y:auto;box-shadow:0 25px 60px rgba(0,0,0,.25);animation:sup .25s ease;}
+@keyframes sup{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+.mh{padding:17px 20px 13px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,#f8fafc,#f1f5f9);border-radius:16px 16px 0 0;position:sticky;top:0;z-index:10;}
+.mh h3{font-size:15px;font-weight:700;color:var(--primary);}
+.xbtn{background:none;border:none;font-size:19px;cursor:pointer;color:var(--muted);width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:6px;}
+.xbtn:hover{background:var(--border);}
+.mb{padding:18px 20px;}
+.fr{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+.fg{margin-bottom:10px;}
+.fg label{display:block;font-size:11px;font-weight:600;color:var(--text);margin-bottom:4px;}
+.fg input,.fg select,.fg textarea{width:100%;padding:8px 11px;border:1.5px solid var(--border);border-radius:7px;font-family:'Tajawal',sans-serif;font-size:13px;outline:none;transition:border-color .2s;color:var(--text);}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--accent);}
+.mf{padding:12px 20px;border-top:1px solid var(--border);display:flex;gap:7px;justify-content:flex-end;background:#f8fafc;border-radius:0 0 16px 16px;position:sticky;bottom:0;z-index:10;}
+
+/* FILE UPLOAD */
+.upload-area{border:2px dashed var(--border);border-radius:10px;padding:16px;text-align:center;cursor:pointer;transition:all .2s;background:#f8fafc;position:relative;}
+.upload-area:hover{border-color:var(--accent);background:#e0f2fe20;}
+.upload-area input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.upload-area .ui{font-size:22px;margin-bottom:4px;}
+.upload-area p{font-size:11px;color:var(--muted);margin:0;}
+.upload-area .uname{font-size:11px;color:var(--accent2);font-weight:600;margin-top:4px;}
+.upload-section{background:#f8fafc;border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid var(--border);}
+.upload-section h4{font-size:12px;font-weight:700;color:var(--primary);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.file-preview{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--border);border-radius:8px;padding:8px 12px;margin-top:8px;}
+.file-preview .fi{font-size:20px;}
+.file-preview .fn{font-size:11px;color:var(--text);font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.file-preview .fdel{background:none;border:none;color:#ef4444;cursor:pointer;font-size:16px;padding:0 4px;}
+.view-file{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:6px;background:#e0f2fe;color:#0369a1;font-size:11px;font-weight:600;text-decoration:none;cursor:pointer;border:none;font-family:'Tajawal',sans-serif;}
+
+/* DETAIL */
+.det-header{padding:18px;background:linear-gradient(135deg,#1a3a5c,#0077b6);color:#fff;border-radius:16px 16px 0 0;}
+.det-header h3{font-size:15px;font-weight:800;margin-bottom:3px;}
+.det-header p{font-size:11px;opacity:.8;}
+.det-body{padding:18px;}
+.det-row{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);}
+.det-row:last-child{border-bottom:none;}
+.det-label{font-size:11px;font-weight:700;color:var(--muted);min-width:100px;padding-top:1px;}
+.det-val{font-size:12px;color:var(--text);flex:1;}
+
+/* DEPT CARDS */
+.dgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:20px;}
+.dc{background:var(--card);border-radius:11px;padding:14px 15px;box-shadow:0 2px 8px rgba(0,0,0,.06);border-right:4px solid var(--accent);display:flex;flex-direction:column;gap:7px;cursor:pointer;transition:all .2s;}
+.dc:hover{transform:translateY(-2px);box-shadow:0 5px 14px rgba(0,0,0,.1);}
+.dcn{font-size:12px;font-weight:700;color:var(--primary);}
+.dct{font-size:22px;font-weight:800;color:var(--primary);}
+.dcs{display:flex;gap:5px;flex-wrap:wrap;}
+
+/* TOAST */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1e293b;color:#fff;padding:10px 18px;border-radius:10px;font-size:12px;font-weight:600;box-shadow:0 8px 26px rgba(0,0,0,.3);z-index:9999;display:none;border-right:4px solid var(--accent);}
+.toast.show{display:block;animation:fup .3s ease;}
+@keyframes fup{from{opacity:0;transform:translateX(-50%) translateY(10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+.empty{text-align:center;padding:36px;color:var(--muted);}
+.empty .ei{font-size:36px;margin-bottom:8px;}
+
+/* FAB - زر عائم للجوال */
+.fab{display:none;position:fixed;bottom:24px;left:20px;width:52px;height:52px;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:50%;color:#fff;font-size:26px;cursor:pointer;box-shadow:0 4px 18px rgba(0,119,182,.4);z-index:300;align-items:center;justify-content:center;transition:all .2s;}
+.fab:hover{transform:scale(1.08);}
+
+/* MOBILE */
+@media(max-width:768px){
+  .topbar{display:flex;}
+  .sidebar{transform:translateX(100%);top:0;}
+  .sidebar.open{transform:translateX(0);}
+  #sideOverlay.open{display:block;}
+  .main{margin-right:0;padding:70px 14px 14px;}
+  .ph h1{font-size:17px;}
+  .phbtns{display:none;}
+  .fab{display:flex;}
+  .fr{grid-template-columns:1fr;}
+  th,td{padding:7px 9px;font-size:10px;}
+}
+@media print{
+  .sidebar,.topbar,#syncBar,#syncTip,.phbtns,.fab,.btn-sm{display:none!important;}
+  .main{margin-right:0;padding:0;}
+}
+</style>
+</head>
+<body>
+
+<div id="syncBar"></div>
+<div id="syncTip"></div>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="lbox">
+    <div class="llogo">📋</div>
+    <h1>منصة متابعة الكتب</h1>
+    <p class="sub">الكتب الواردة والصادرة — النظام المركزي</p>
+    <select id="loginRole">
+      <option value="">── اختر نوع الدخول ──</option>
+      <option value="manager">👨‍💼 مدير (صلاحية كاملة)</option>
+      <optgroup label="── الأقسام ──">
+        <option value="فني">⚙️ قسم الأمور الفنية</option>
+        <option value="اداري">📁 قسم الأمور الإدارية والقانونية</option>
+        <option value="تخطيط">📊 قسم التخطيط</option>
+        <option value="عمليات">🔧 قسم العمليات</option>
+        <option value="هندسة">🏗️ قسم الهندسة</option>
+        <option value="صحة">🏥 قسم الصحة العامة</option>
+        <option value="صيدلة">💊 قسم الصيدلة</option>
+        <option value="تفتيش">🔍 قسم التفتيش</option>
+        <option value="تدقيق">✅ قسم التدقيق</option>
+      </optgroup>
+    </select>
+    <input type="password" id="loginPass" placeholder="🔒 كلمة المرور" />
+    <button class="lbtn" onclick="doLogin()">دخول</button>
+    <p class="lerr" id="loginError">⚠ كلمة المرور غير صحيحة</p>
+    <p class="lhint" id="fbHint">🔥 جاري الاتصال بـ Firebase...</p>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <!-- MOBILE TOPBAR -->
+  <div class="topbar">
+    <button class="hamburger" onclick="toggleSidebar()">☰</button>
+    <h2>📋 متابعة الكتب</h2>
+    <button class="mob-add" id="mobAddBtn" onclick="openAdd()">➕ إضافة</button>
+  </div>
+  <div id="sideOverlay" onclick="closeSidebar()"></div>
+
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="sidebar">
+    <div class="sh">
+      <div class="slogo">
+        <div class="sli">📋</div>
+        <div><h2>متابعة الكتب</h2><p>النظام المركزي</p></div>
+      </div>
+    </div>
+    <div class="ubadge">
+      <div class="uav" id="sbAvatar">👤</div>
+      <div><div class="un" id="sbName">-</div><div class="ur" id="sbRole">-</div></div>
+    </div>
+    <div class="fbs">
+      <div class="fdot" id="fbDot"></div>
+      <span id="fbStatusTxt">جاري الاتصال...</span>
+    </div>
+    <div class="nsec" id="navItems"></div>
+    <div class="sfooter">
+      <button class="logoutbtn" onclick="doLogout()">🚪 تسجيل الخروج</button>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="ph">
+        <div><h1>📊 لوحة التحكم</h1><p>نظرة عامة على الكتب والأقسام</p></div>
+        <div class="phbtns"><button class="btn btn-o" onclick="loadFromFB()">🔄 تحديث</button><button class="btn btn-p" onclick="window.print()">🖨 طباعة</button></div>
+      </div>
+      <div class="sgrid" id="overallStats"></div>
+      <div id="deptSection"></div>
+    </div>
+
+    <!-- ALL BOOKS -->
+    <div class="page" id="page-all">
+      <div class="ph">
+        <div><h1>📁 جميع الكتب</h1></div>
+        <div class="phbtns"><button class="btn btn-o" onclick="loadFromFB()">🔄 تحديث</button><button class="btn btn-p" onclick="openAdd()">➕ إضافة كتاب</button></div>
+      </div>
+      <div class="card">
+        <div class="ch"><h3>قائمة الكتب</h3></div>
+        <div class="filt">
+          <input type="text" id="fSearchAll" placeholder="🔍 بحث..." oninput="renderAllTable()" style="flex:1;min-width:140px;">
+          <select id="fTypeAll" onchange="renderAllTable()"><option value="">كل الأنواع</option><option value="وارد">📥 وارد</option><option value="صادر">📤 صادر</option></select>
+          <select id="fStatusAll" onchange="renderAllTable()"><option value="">كل الحالات</option><option value="قيد الإنجاز">⏳ قيد الإنجاز</option><option value="منجز">✅ منجز</option></select>
+          <select id="fDeptAll" onchange="renderAllTable()"><option value="">كل الأقسام</option></select>
+        </div>
+        <div style="overflow-x:auto"><table><thead><tr>
+          <th>#</th><th>رقم</th><th>التاريخ</th><th>النوع</th><th>القسم</th><th>الجهة</th><th>الموضوع</th><th>الحالة</th><th>ملفات</th><th>إجراءات</th>
+        </tr></thead><tbody id="allTableBody"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- DEPT PAGE -->
+    <div class="page" id="page-dept">
+      <div class="ph">
+        <div><h1 id="deptTitle">-</h1></div>
+        <div class="phbtns"><button class="btn btn-o" onclick="loadFromFB()">🔄 تحديث</button><button class="btn btn-p" id="addBtnDept" onclick="openAdd()">➕ إضافة كتاب</button></div>
+      </div>
+      <div class="card">
+        <div class="ch"><h3>قائمة الكتب</h3>
+          <select id="fTypeDept" onchange="renderDeptTable()" style="padding:4px 8px;border:1.5px solid var(--border);border-radius:6px;font-family:'Tajawal',sans-serif;font-size:11px;outline:none;">
+            <option value="">كل الأنواع</option><option value="وارد">📥 وارد</option><option value="صادر">📤 صادر</option>
+          </select>
+        </div>
+        <div class="filt">
+          <input type="text" id="fSearchDept" placeholder="🔍 بحث..." oninput="renderDeptTable()" style="flex:1;min-width:140px;">
+          <select id="fStatusDept" onchange="renderDeptTable()"><option value="">كل الحالات</option><option value="قيد الإنجاز">⏳ قيد الإنجاز</option><option value="منجز">✅ منجز</option></select>
+        </div>
+        <div style="overflow-x:auto"><table><thead><tr>
+          <th>#</th><th>رقم</th><th>التاريخ</th><th>النوع</th><th>الجهة</th><th>الموضوع</th><th>الحالة</th><th>ملفات</th><th>إجراءات</th>
+        </tr></thead><tbody id="deptTableBody"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- REPORT -->
+    <div class="page" id="page-report">
+      <div class="ph">
+        <div><h1>📈 التقارير</h1></div>
+        <button class="btn btn-p" onclick="window.print()">🖨 طباعة</button>
+      </div>
+      <div id="reportContent"></div>
+    </div>
+  </div>
+
+  <!-- FAB للجوال -->
+  <button class="fab" id="fabBtn" onclick="openAdd()">➕</button>
+</div>
+
+<!-- ADD/EDIT MODAL -->
+<div class="moverlay" id="bookModal">
+  <div class="modal">
+    <div class="mh">
+      <h3 id="modalTitle">إضافة كتاب جديد</h3>
+      <button class="xbtn" onclick="closeModal()">✕</button>
+    </div>
+    <div class="mb">
+      <div class="fr">
+        <div class="fg"><label>رقم الكتاب *</label><input type="text" id="f_num" placeholder="رقم الكتاب"></div>
+        <div class="fg"><label>التاريخ *</label><input type="date" id="f_date"></div>
+      </div>
+      <div class="fr">
+        <div class="fg"><label>نوع الكتاب</label>
+          <select id="f_type"><option value="وارد">📥 وارد</option><option value="صادر">📤 صادر</option></select>
+        </div>
+        <div class="fg"><label>القسم المعني</label>
+          <select id="f_dept">
+            <option value="فني">قسم الأمور الفنية</option>
+            <option value="اداري">قسم الأمور الإدارية والقانونية</option>
+            <option value="تخطيط">قسم التخطيط</option>
+            <option value="عمليات">قسم العمليات</option>
+            <option value="هندسة">قسم الهندسة</option>
+            <option value="صحة">قسم الصحة العامة</option>
+            <option value="صيدلة">قسم الصيدلة</option>
+            <option value="تفتيش">قسم التفتيش</option>
+            <option value="تدقيق">قسم التدقيق</option>
+          </select>
+        </div>
+      </div>
+      <div class="fg"><label>الجهة المُرسِلة / المُرسَل إليها</label><input type="text" id="f_party" placeholder="اسم الجهة"></div>
+      <div class="fr">
+        <div class="fg"><label>الحالة</label>
+          <select id="f_status"><option value="قيد الإنجاز">⏳ قيد الإنجاز</option><option value="منجز">✅ منجز</option></select>
+        </div>
+        <div class="fg"><label>تاريخ الإنجاز</label><input type="date" id="f_doneDate"></div>
+      </div>
+      <div class="fg"><label>موضوع الكتاب *</label><textarea id="f_subject" rows="2" placeholder="موضوع الكتاب..."></textarea></div>
+      <div class="fg"><label>ملاحظات</label><textarea id="f_notes" rows="2" placeholder="ملاحظات..."></textarea></div>
+
+      <!-- رفع الكتاب الأصلي -->
+      <div class="upload-section">
+        <h4>📎 الكتاب الأصلي</h4>
+        <div class="upload-area" id="origArea">
+          <input type="file" id="f_origFile" accept="image/*,.pdf" onchange="handleFile('orig',this)">
+          <div class="ui">📄</div>
+          <p><strong>اضغط للرفع</strong> أو اسحب الملف هنا</p>
+          <p>يدعم: صور (JPG, PNG) و PDF</p>
+          <div class="uname" id="origName"></div>
+        </div>
+        <div id="origPreview"></div>
+      </div>
+
+      <!-- رفع الرد -->
+      <div class="upload-section">
+        <h4>📩 رفع الرد / الإجابة</h4>
+        <div class="upload-area" id="replyArea">
+          <input type="file" id="f_replyFile" accept="image/*,.pdf" onchange="handleFile('reply',this)">
+          <div class="ui">📨</div>
+          <p><strong>اضغط لرفع الرد</strong></p>
+          <p>صورة أو PDF للرد الرسمي</p>
+          <div class="uname" id="replyName"></div>
+        </div>
+        <div id="replyPreview"></div>
+      </div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-o" onclick="closeModal()">إلغاء</button>
+      <button class="btn btn-p" onclick="saveBook()">💾 حفظ الكتاب</button>
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL MODAL -->
+<div class="moverlay" id="detailModal">
+  <div class="modal">
+    <div class="det-header">
+      <h3 id="det_title">-</h3>
+      <p id="det_sub">-</p>
+    </div>
+    <div class="det-body" id="det_body"></div>
+    <div class="mf">
+      <button class="btn btn-o" onclick="closeDetail()">إغلاق</button>
+      <button class="btn btn-w" id="det_editBtn">✏️ تعديل</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- FILE VIEWER MODAL -->
+<div class="moverlay" id="fileViewerModal">
+  <div class="modal" style="width:680px">
+    <div class="mh">
+      <h3 id="fvTitle">عرض الملف</h3>
+      <button class="xbtn" onclick="closeFileViewer()">✕</button>
+    </div>
+    <div class="mb" id="fvBody" style="padding:16px;min-height:200px;"></div>
+    <div class="mf">
+      <button class="btn btn-o" onclick="closeFileViewer()">إغلاق</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getDatabase, ref, set, get, onValue, remove } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+
+const DEPTS=[
+  {id:'فني',name:'قسم الأمور الفنية',icon:'⚙️',color:'#0077b6'},
+  {id:'اداري',name:'قسم الأمور الإدارية والقانونية',icon:'📁',color:'#7c3aed'},
+  {id:'تخطيط',name:'قسم التخطيط',icon:'📊',color:'#0891b2'},
+  {id:'عمليات',name:'قسم العمليات',icon:'🔧',color:'#d97706'},
+  {id:'هندسة',name:'قسم الهندسة',icon:'🏗️',color:'#059669'},
+  {id:'صحة',name:'قسم الصحة العامة',icon:'🏥',color:'#ef4444'},
+  {id:'صيدلة',name:'قسم الصيدلة',icon:'💊',color:'#8b5cf6'},
+  {id:'تفتيش',name:'قسم التفتيش',icon:'🔍',color:'#92400e'},
+  {id:'تدقيق',name:'قسم التدقيق',icon:'✅',color:'#16a34a'},
+];
+const PASSWORDS={manager:'admin2025','فني':'dept01','اداري':'dept02','تخطيط':'dept03','عمليات':'dept04','هندسة':'dept05','صحة':'dept06','صيدلة':'dept07','تفتيش':'dept08','تدقيق':'dept09'};
+
+let books=[],currentUser=null,currentDept=null,editingId=null,currentPage='dashboard',db=null,fbOk=false;
+let origData=null,replyData=null; // base64 data for files
+
+// ── FIREBASE ──
+const FB_URL='https://book-tracking-2c7b2-default-rtdb.firebaseio.com';
+function initFB(){
+  try{
+    const app=initializeApp({databaseURL:FB_URL},'books2_'+Date.now());
+    db=getDatabase(app);
+    fbOk=true;
+    setFBStatus(true);
+    document.getElementById('fbHint').textContent='🔥 Firebase متصل – البيانات مشتركة';
+    onValue(ref(db,'books'),snap=>{
+      const d=snap.val();
+      books=d?Object.values(d):[];
+      saveLocal(books);
+      if(currentUser){refreshUI();buildNav();}
+    },err=>{
+      // فشل الاتصال أو القراءة - لا نوقف المنصة
+      setFBStatus(false);
+      document.getElementById('fbHint').textContent='⚠ تعذر الاتصال - وضع محلي';
+    });
+  }catch(e){
+    setFBStatus(false);
+    document.getElementById('fbHint').textContent='⚠ وضع محلي';
+    books=loadLocal();
+  }
+}
+// شبكة أمان: مهما حدث مع Firebase، الدخول يبقى متاحاً دائماً
+setTimeout(()=>{
+  const hint=document.getElementById('fbHint');
+  if(hint && hint.textContent.includes('جاري الاتصال')){
+    hint.textContent='⚠ الاتصال بطيء - يمكنك الدخول الآن';
+  }
+},4000);
+function setFBStatus(ok){
+  document.getElementById('fbDot').className='fdot'+(ok?'':' off');
+  document.getElementById('fbStatusTxt').textContent=ok?'🔥 Firebase متصل':'📴 وضع محلي';
+}
+window.loadFromFB=async function(){
+  if(!fbOk||!db){books=loadLocal();refreshUI();buildNav();return;}
+  showSync('جاري التحديث...');
+  try{const snap=await get(ref(db,'books'));books=snap.val()?Object.values(snap.val()):[];saveLocal(books);hideSync();refreshUI();buildNav();toast('✅ تم التحديث');}
+  catch(e){hideSync();toast('⚠ فشل التحديث');}
+};
+function withTimeout(promise,ms,label){
+  return Promise.race([
+    promise,
+    new Promise((_,rej)=>setTimeout(()=>rej(new Error('TIMEOUT:'+label)),ms))
+  ]);
+}
+async function saveFB(obj){
+  if(fbOk&&db){
+    try{
+      await withTimeout(set(ref(db,'books/'+obj.id),obj),10000,'save');
+    }catch(e){
+      if(String(e.message).startsWith('TIMEOUT')){
+        toast('⚠ انتهت مهلة الاتصال بالخادم - تحقق من الإنترنت أو الشبكة');
+      } else {
+        toast('⚠ فشل الحفظ: '+(e.message||e));
+      }
+      console.error('saveFB error:',e);
+    }
+  }
+  saveLocal(books);
+}
+async function delFB(id){
+  if(fbOk&&db){
+    try{
+      await withTimeout(remove(ref(db,'books/'+id)),10000,'delete');
+    }catch(e){
+      if(String(e.message).startsWith('TIMEOUT')){
+        toast('⚠ انتهت مهلة الاتصال بالخادم - تحقق من الإنترنت أو الشبكة');
+      } else {
+        toast('⚠ فشل الحذف: '+(e.message||e));
+      }
+      console.error('delFB error:',e);
+    }
+  }
+  saveLocal(books);
+}
+function saveLocal(d){
+  try{
+    // لا نخزن الصور محلياً لتفادي امتلاء مساحة المتصفح وتجمد الصفحة
+    const light=d.map(b=>({...b, origFile: b.origFile?{name:b.origFile.name,type:b.origFile.type}:null, replyFile: b.replyFile?{name:b.replyFile.name,type:b.replyFile.type}:null}));
+    localStorage.setItem('hms_books_v3',JSON.stringify(light));
+  }catch(e){
+    // إذا فشل التخزين المحلي (امتلاء المساحة) نتجاهله بصمت، البيانات الكاملة تبقى في الذاكرة وFirebase
+    try{ localStorage.removeItem('hms_books_v3'); }catch(e2){}
+  }
+}
+function loadLocal(){try{return JSON.parse(localStorage.getItem('hms_books_v3')||'[]');}catch{return[];}}
+function showSync(m){document.getElementById('syncBar').style.display='block';const t=document.getElementById('syncTip');t.textContent='🔄 '+m;t.style.display='block';}
+function hideSync(){document.getElementById('syncBar').style.display='none';document.getElementById('syncTip').style.display='none';}
+
+// ── FILE HANDLING مع ضغط الصور ──
+window.handleFile=function(type,input){
+  const file=input.files[0]; if(!file) return;
+  const maxSize=300*1024; // 300KB حد أقصى
+  if(file.type.startsWith('image/')){
+    // ضغط الصورة
+    const img=new Image();
+    const url=URL.createObjectURL(file);
+    img.onload=()=>{
+      const canvas=document.createElement('canvas');
+      let w=img.width, h=img.height;
+      const maxDim=1200;
+      if(w>maxDim||h>maxDim){
+        if(w>h){h=Math.round(h*maxDim/w);w=maxDim;}
+        else{w=Math.round(w*maxDim/h);h=maxDim;}
+      }
+      canvas.width=w; canvas.height=h;
+      canvas.getContext('2d').drawImage(img,0,0,w,h);
+      // ضغط تدريجي حتى نصل للحجم المناسب
+      let quality=0.7;
+      let data=canvas.toDataURL('image/jpeg',quality);
+      while(data.length>maxSize*1.37 && quality>0.2){
+        quality-=0.1;
+        data=canvas.toDataURL('image/jpeg',quality);
+      }
+      URL.revokeObjectURL(url);
+      const fd={name:file.name,type:'image/jpeg',data};
+      setFileData(type,fd);
+    };
+    img.src=url;
+  } else {
+    // PDF - تحويل مباشر مع تحذير الحجم
+    const reader=new FileReader();
+    reader.onload=e=>{
+      const data=e.target.result;
+      if(data.length>maxSize*1.37){
+        toast('⚠ حجم الملف كبير جداً، يرجى استخدام صورة بدلاً من PDF');
+        input.value=''; return;
+      }
+      const fd={name:file.name,type:file.type,data};
+      setFileData(type,fd);
+    };
+    reader.readAsDataURL(file);
+  }
+};
+
+function setFileData(type,fd){
+  if(type==='orig'){
+    origData=fd;
+    document.getElementById('origName').textContent='✅ '+fd.name;
+    showFilePreview('origPreview',fd,'orig');
+  } else {
+    replyData=fd;
+    document.getElementById('replyName').textContent='✅ '+fd.name;
+    showFilePreview('replyPreview',fd,'reply');
+  }
+}
+
+function showFilePreview(containerId,fileObj,type){
+  const c=document.getElementById(containerId);
+  const isImg=fileObj.type.startsWith('image/');
+  c.innerHTML=`<div class="file-preview">
+    <span class="fi">${isImg?'🖼️':'📄'}</span>
+    <span class="fn">${fileObj.name}</span>
+    <button class="view-file" onclick="viewFile('${type==='orig'?'orig':'reply'}')">👁 عرض</button>
+    <button class="fdel" onclick="clearFile('${type}')">✕</button>
+  </div>`;
+}
+
+window.clearFile=function(type){
+  if(type==='orig'){origData=null;document.getElementById('origName').textContent='';document.getElementById('origPreview').innerHTML='';document.getElementById('f_origFile').value='';}
+  else{replyData=null;document.getElementById('replyName').textContent='';document.getElementById('replyPreview').innerHTML='';document.getElementById('f_replyFile').value='';}
+};
+
+// ── LOGIN ──
+document.getElementById('loginPass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+window.doLogin=function(){
+  const role=document.getElementById('loginRole').value;
+  const pass=document.getElementById('loginPass').value;
+  const err=document.getElementById('loginError');
+  if(!role||!pass){err.style.display='block';err.textContent='⚠ يرجى تعبئة جميع الحقول';return;}
+  if(PASSWORDS[role]!==pass){err.style.display='block';err.textContent='⚠ كلمة المرور غير صحيحة';return;}
+  err.style.display='none';currentUser=role;
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('app').style.display='block';
+  initApp();
+};
+window.doLogout=function(){
+  currentUser=null;currentDept=null;
+  document.getElementById('loginScreen').style.display='flex';
+  document.getElementById('app').style.display='none';
+  document.getElementById('loginPass').value='';
+  document.getElementById('loginRole').value='';
+};
+
+// ── MOBILE SIDEBAR ──
+window.toggleSidebar=function(){
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sideOverlay').classList.toggle('open');
+};
+window.closeSidebar=function(){
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sideOverlay').classList.remove('open');
+};
+
+// ── INIT ──
+function initApp(){
+  const d=DEPTS.find(x=>x.id===currentUser);
+  if(currentUser==='manager'){document.getElementById('sbName').textContent='المدير العام';document.getElementById('sbRole').textContent='صلاحيات كاملة';document.getElementById('sbAvatar').textContent='👨‍💼';}
+  else{document.getElementById('sbName').textContent=d?.name||'-';document.getElementById('sbRole').textContent='موظف القسم';document.getElementById('sbAvatar').textContent=d?.icon||'👤';}
+  books=loadLocal();
+  const sel=document.getElementById('fDeptAll');
+  DEPTS.forEach(d=>{const o=document.createElement('option');o.value=d.id;o.textContent=d.name;sel.appendChild(o);});
+  // hide mob add for viewer
+  const canAdd=currentUser==='manager'||currentUser!=='manager';
+  buildNav();
+  if(currentUser==='manager'){showPage('dashboard');renderDashboard();}
+  else{currentDept=currentUser;showPage('dept');renderDeptPage();}
+}
+
+// ── NAV ──
+function buildNav(){
+  const nav=document.getElementById('navItems');nav.innerHTML='';
+  if(currentUser==='manager'){
+    nav.innerHTML+=`<div class="nlbl">الرئيسية</div>`;
+    nav.innerHTML+=ni('dashboard','📊','لوحة التحكم');
+    nav.innerHTML+=ni('all','📁','جميع الكتب',books.length);
+    nav.innerHTML+=ni('report','📈','التقارير');
+    nav.innerHTML+=`<div class="nlbl" style="margin-top:8px">الأقسام</div>`;
+    DEPTS.forEach(d=>nav.innerHTML+=ni('dept:'+d.id,d.icon,d.name,books.filter(b=>b.dept===d.id).length));
+  } else {
+    nav.innerHTML+=ni('dept','📋','كتب قسمي',books.filter(b=>b.dept===currentUser).length);
+    nav.innerHTML+=ni('report','📈','الإحصاء');
+  }
+}
+function ni(id,icon,label,count=''){
+  const c=count>0?`<span class="nc">${count}</span>`:'';
+  return `<button class="nitem" id="nav-${btoa(encodeURIComponent(id))}" onclick="hn('${id}')">${icon?`<span class="ni">${icon}</span>`:''}${label}${c}</button>`;
+}
+window.hn=function(id){
+  document.querySelectorAll('.nitem').forEach(el=>el.classList.remove('active'));
+  document.getElementById('nav-'+btoa(encodeURIComponent(id)))?.classList.add('active');
+  closeSidebar();
+  if(id==='dashboard'){showPage('dashboard');renderDashboard();}
+  else if(id==='all'){showPage('all');renderAllTable();}
+  else if(id==='report'){showPage('report');renderReport();}
+  else if(id.startsWith('dept:')){currentDept=id.replace('dept:','');showPage('dept');renderDeptPage();}
+  else if(id==='dept'){showPage('dept');renderDeptPage();}
+};
+function showPage(n){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById('page-'+n).classList.add('active');currentPage=n;
+  // show/hide FAB
+  const showFab=(n==='dept'||n==='all');
+  const can=(currentUser==='manager'||(n==='dept'&&currentUser===currentDept));
+  document.getElementById('fabBtn').style.display=(showFab&&can)?'flex':'none';
+  document.getElementById('mobAddBtn').style.display=(showFab&&can)?'block':'none';
+}
+function refreshUI(){
+  if(currentPage==='dashboard')renderDashboard();
+  else if(currentPage==='all')renderAllTable();
+  else if(currentPage==='dept')renderDeptTable();
+  else if(currentPage==='report')renderReport();
+}
+
+// ── DASHBOARD ──
+function renderDashboard(){
+  const total=books.length,done=books.filter(b=>b.status==='منجز').length,pend=books.filter(b=>b.status==='قيد الإنجاز').length;
+  document.getElementById('overallStats').innerHTML=`
+    <div class="sc" style="border-right-color:#0077b6"><div class="lbl">إجمالي الكتب</div><div class="val">${total}</div>
+      <div class="sub"><span class="bdg bi">📥 ${books.filter(b=>b.type==='وارد').length}</span><span class="bdg" style="background:#fce7f3;color:#be185d">📤 ${books.filter(b=>b.type==='صادر').length}</span></div></div>
+    <div class="sc" style="border-right-color:#22c55e"><div class="lbl">منجز</div><div class="val" style="color:#16a34a">${done}</div>
+      <div class="sub"><span class="bdg bs">${total?Math.round(done/total*100):0}%</span></div></div>
+    <div class="sc" style="border-right-color:#f59e0b"><div class="lbl">قيد الإنجاز</div><div class="val" style="color:#ca8a04">${pend}</div>
+      <div class="sub"><span class="bdg bw">${total?Math.round(pend/total*100):0}%</span></div></div>`;
+  const sec=document.getElementById('deptSection');
+  sec.innerHTML='<h3 style="font-size:13px;font-weight:700;color:var(--primary);margin-bottom:10px">📂 الكتب حسب القسم</h3><div class="dgrid" id="dgrid"></div>';
+  const grid=document.getElementById('dgrid');
+  DEPTS.forEach(d=>{
+    const dB=books.filter(b=>b.dept===d.id);
+    const dd=dB.filter(b=>b.status==='منجز').length,dp=dB.filter(b=>b.status==='قيد الإنجاز').length;
+    grid.innerHTML+=`<div class="dc" style="border-right-color:${d.color}" onclick="hn('dept:${d.id}')">
+      <div class="dcn">${d.icon} ${d.name}</div><div class="dct">${dB.length}</div>
+      <div class="dcs"><span class="bdg bs">✅ ${dd}</span><span class="bdg bw">⏳ ${dp}</span></div></div>`;
+  });
+}
+
+// ── TABLES ──
+function fileIcons(b){
+  let s='';
+  if(b.origFile) s+=`<button class="view-file" onclick="viewFileById('${b.id}','orig')">📄 أصل</button> `;
+  if(b.replyFile) s+=`<button class="view-file" onclick="viewFileById('${b.id}','reply')">📩 رد</button>`;
+  return s||'<span style="color:var(--muted);font-size:10px">—</span>';
+}
+
+function renderAllTable(){
+  const s=(document.getElementById('fSearchAll')?.value||'').toLowerCase();
+  const tf=document.getElementById('fTypeAll')?.value||'';
+  const sf=document.getElementById('fStatusAll')?.value||'';
+  const df=document.getElementById('fDeptAll')?.value||'';
+  let data=[...books];
+  if(s) data=data.filter(b=>b.num?.toLowerCase().includes(s)||b.subject?.toLowerCase().includes(s)||b.party?.toLowerCase().includes(s));
+  if(tf) data=data.filter(b=>b.type===tf);
+  if(sf) data=data.filter(b=>b.status===sf);
+  if(df) data=data.filter(b=>b.dept===df);
+  data.sort((a,b)=>b.id-a.id);
+  const tbody=document.getElementById('allTableBody');
+  if(!data.length){tbody.innerHTML=`<tr><td colspan="10"><div class="empty"><div class="ei">📭</div><p>لا توجد كتب</p></div></td></tr>`;return;}
+  tbody.innerHTML=data.map((b,i)=>{
+    const d=DEPTS.find(x=>x.id===b.dept);
+    return `<tr>
+      <td style="color:var(--muted)">${i+1}</td><td><strong>${b.num||'-'}</strong></td><td>${b.date||'-'}</td>
+      <td><span class="sbdg type-${b.type}">${b.type}</span></td>
+      <td style="font-size:10px">${d?d.icon+' '+d.name:'-'}</td>
+      <td>${b.party||'-'}</td>
+      <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${b.subject||'-'}</td>
+      <td><span class="sbdg s-${b.status?.replace(' ','-')}">${b.status}</span></td>
+      <td>${fileIcons(b)}</td>
+      <td>
+        <button class="btn btn-sm btn-o" onclick="openDetail('${b.id}')">👁</button>
+        <button class="btn btn-sm btn-w" onclick="openEdit('${b.id}')" style="margin-right:3px">✏️</button>
+        <button class="btn btn-sm btn-d" onclick="delBook('${b.id}')" style="margin-right:3px">🗑</button>
+      </td></tr>`;
+  }).join('');
+}
+
+function renderDeptPage(){
+  const d=DEPTS.find(x=>x.id===currentDept);
+  document.getElementById('deptTitle').textContent=d?`${d.icon} ${d.name}`:'القسم';
+  const can=(currentUser==='manager'||currentUser===currentDept);
+  document.getElementById('addBtnDept').style.display=can?'inline-flex':'none';
+  renderDeptTable();
+}
+
+function renderDeptTable(){
+  const s=(document.getElementById('fSearchDept')?.value||'').toLowerCase();
+  const tf=document.getElementById('fTypeDept')?.value||'';
+  const sf=document.getElementById('fStatusDept')?.value||'';
+  let data=books.filter(b=>b.dept===currentDept);
+  if(s) data=data.filter(b=>b.num?.toLowerCase().includes(s)||b.subject?.toLowerCase().includes(s)||b.party?.toLowerCase().includes(s));
+  if(tf) data=data.filter(b=>b.type===tf);
+  if(sf) data=data.filter(b=>b.status===sf);
+  data.sort((a,b)=>b.id-a.id);
+  const tbody=document.getElementById('deptTableBody');
+  if(!data.length){tbody.innerHTML=`<tr><td colspan="9"><div class="empty"><div class="ei">📭</div><p>لا توجد كتب في هذا القسم</p></div></td></tr>`;return;}
+  const can=(currentUser==='manager'||currentUser===currentDept);
+  tbody.innerHTML=data.map((b,i)=>`<tr>
+    <td style="color:var(--muted)">${i+1}</td><td><strong>${b.num||'-'}</strong></td><td>${b.date||'-'}</td>
+    <td><span class="sbdg type-${b.type}">${b.type}</span></td>
+    <td>${b.party||'-'}</td>
+    <td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${b.subject||'-'}</td>
+    <td><span class="sbdg s-${b.status?.replace(' ','-')}">${b.status}</span></td>
+    <td>${fileIcons(b)}</td>
+    <td>
+      <button class="btn btn-sm btn-o" onclick="openDetail('${b.id}')">👁</button>
+      ${can?`<button class="btn btn-sm btn-w" onclick="openEdit('${b.id}')" style="margin-right:3px">✏️</button>
+      <button class="btn btn-sm btn-d" onclick="delBook('${b.id}')" style="margin-right:3px">🗑</button>`:''}
+    </td></tr>`).join('');
+}
+
+// ── MODAL ──
+window.openAdd=function(){
+  editingId=null;origData=null;replyData=null;
+  document.getElementById('modalTitle').textContent='إضافة كتاب جديد';
+  document.getElementById('f_num').value='';
+  document.getElementById('f_date').valueAsDate=new Date();
+  document.getElementById('f_type').value='وارد';
+  document.getElementById('f_dept').value=currentDept&&currentDept!=='manager'?currentDept:'فني';
+  document.getElementById('f_party').value='';
+  document.getElementById('f_status').value='قيد الإنجاز';
+  document.getElementById('f_doneDate').value='';
+  document.getElementById('f_subject').value='';
+  document.getElementById('f_notes').value='';
+  document.getElementById('origName').textContent='';
+  document.getElementById('replyName').textContent='';
+  document.getElementById('origPreview').innerHTML='';
+  document.getElementById('replyPreview').innerHTML='';
+  document.getElementById('f_origFile').value='';
+  document.getElementById('f_replyFile').value='';
+  document.getElementById('bookModal').classList.add('open');
+};
+
+window.openEdit=function(id){
+  const b=books.find(x=>x.id===id);if(!b)return;
+  editingId=id;
+  origData=b.origFile||null;
+  replyData=b.replyFile||null;
+  document.getElementById('modalTitle').textContent='تعديل الكتاب';
+  document.getElementById('f_num').value=b.num||'';
+  document.getElementById('f_date').value=b.date||'';
+  document.getElementById('f_type').value=b.type||'وارد';
+  document.getElementById('f_dept').value=b.dept||'فني';
+  document.getElementById('f_party').value=b.party||'';
+  document.getElementById('f_status').value=b.status||'قيد الإنجاز';
+  document.getElementById('f_doneDate').value=b.doneDate||'';
+  document.getElementById('f_subject').value=b.subject||'';
+  document.getElementById('f_notes').value=b.notes||'';
+  if(origData){document.getElementById('origName').textContent='✅ '+origData.name;showFilePreview('origPreview',origData,'orig');}
+  else{document.getElementById('origName').textContent='';document.getElementById('origPreview').innerHTML='';}
+  if(replyData){document.getElementById('replyName').textContent='✅ '+replyData.name;showFilePreview('replyPreview',replyData,'reply');}
+  else{document.getElementById('replyName').textContent='';document.getElementById('replyPreview').innerHTML='';}
+  document.getElementById('bookModal').classList.add('open');
+};
+
+window.closeModal=function(){document.getElementById('bookModal').classList.remove('open');};
+
+window.saveBook=async function(){
+  const num=document.getElementById('f_num').value.trim();
+  const date=document.getElementById('f_date').value;
+  const subject=document.getElementById('f_subject').value.trim();
+  if(!num||!date||!subject){toast('⚠ يرجى ملء الحقول الإلزامية');return;}
+  const obj={
+    id:editingId||Date.now().toString(),
+    num,date,subject,
+    type:document.getElementById('f_type').value,
+    dept:document.getElementById('f_dept').value,
+    party:document.getElementById('f_party').value,
+    status:document.getElementById('f_status').value,
+    doneDate:document.getElementById('f_doneDate').value,
+    notes:document.getElementById('f_notes').value,
+    origFile:origData||null,
+    replyFile:replyData||null,
+    updatedAt:new Date().toISOString(),
+  };
+  if(editingId){const i=books.findIndex(x=>x.id===editingId);if(i!==-1)books[i]={...books[i],...obj};}
+  else books.push(obj);
+  showSync('جاري الحفظ...');
+  await saveFB(obj);
+  hideSync();closeModal();refreshUI();buildNav();
+  toast(editingId?'✅ تم تعديل الكتاب':'✅ تم إضافة الكتاب');
+};
+
+window.delBook=async function(id){
+  if(!confirm('هل أنت متأكد من حذف هذا الكتاب؟'))return;
+  books=books.filter(b=>b.id!==id);
+  showSync('جاري الحذف...');
+  await delFB(id);hideSync();refreshUI();buildNav();
+  toast('🗑 تم الحذف');
+};
+
+// ── DETAIL ──
+window.openDetail=function(id){
+  const b=books.find(x=>x.id===id);if(!b)return;
+  const d=DEPTS.find(x=>x.id===b.dept);
+  document.getElementById('det_title').textContent='كتاب رقم '+b.num;
+  document.getElementById('det_sub').textContent=b.type+' — '+b.date;
+  document.getElementById('det_body').innerHTML=`
+    <div class="det-row"><div class="det-label">النوع</div><div class="det-val"><span class="sbdg type-${b.type}">${b.type}</span></div></div>
+    <div class="det-row"><div class="det-label">القسم</div><div class="det-val">${d?d.icon+' '+d.name:'-'}</div></div>
+    <div class="det-row"><div class="det-label">الجهة</div><div class="det-val">${b.party||'-'}</div></div>
+    <div class="det-row"><div class="det-label">الموضوع</div><div class="det-val">${b.subject||'-'}</div></div>
+    <div class="det-row"><div class="det-label">الحالة</div><div class="det-val"><span class="sbdg s-${b.status?.replace(' ','-')}">${b.status}</span></div></div>
+    <div class="det-row"><div class="det-label">تاريخ الإنجاز</div><div class="det-val">${b.doneDate||'-'}</div></div>
+    <div class="det-row"><div class="det-label">ملاحظات</div><div class="det-val">${b.notes||'-'}</div></div>
+    <div class="det-row"><div class="det-label">الكتاب الأصلي</div><div class="det-val">${b.origFile?`<button class="view-file" onclick="viewFileById('${b.id}','orig')">📄 ${b.origFile.name}</button>`:'—'}</div></div>
+    <div class="det-row"><div class="det-label">الرد</div><div class="det-val">${b.replyFile?`<button class="view-file" onclick="viewFileById('${b.id}','reply')">📩 ${b.replyFile.name}</button>`:'—'}</div></div>`;
+  document.getElementById('det_editBtn').onclick=()=>{closeDetail();openEdit(id);};
+  document.getElementById('detailModal').classList.add('open');
+};
+window.closeDetail=function(){document.getElementById('detailModal').classList.remove('open');};
+
+// ── REPORT ──
+function renderReport(){
+  const today=new Date().toLocaleDateString('ar-SA');
+  const total=books.length,done=books.filter(b=>b.status==='منجز').length,pend=books.filter(b=>b.status==='قيد الإنجاز').length;
+  let html=`<div class="card" style="padding:20px;margin-bottom:18px">
+    <div style="text-align:center;padding-bottom:12px;border-bottom:2px solid var(--border);margin-bottom:16px">
+      <h2 style="font-size:18px;color:var(--primary);font-weight:800">التقرير الشامل للكتب</h2>
+      <p style="color:var(--muted);font-size:11px;margin-top:2px">تاريخ التقرير: ${today}</p>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+      <span style="background:#f0f4f8;padding:4px 12px;border-radius:7px;font-size:12px;font-weight:700">الإجمالي: ${total}</span>
+      <span class="bdg bs">✅ ${done} منجز</span><span class="bdg bw">⏳ ${pend} قيد الإنجاز</span>
+      <span class="bdg bi">📥 ${books.filter(b=>b.type==='وارد').length} وارد</span>
+      <span class="bdg" style="background:#fce7f3;color:#be185d">📤 ${books.filter(b=>b.type==='صادر').length} صادر</span>
+    </div>`;
+  DEPTS.forEach(d=>{
+    const dB=books.filter(b=>b.dept===d.id);
+    const dd=dB.filter(b=>b.status==='منجز').length,dp=dB.filter(b=>b.status==='قيد الإنجاز').length;
+    html+=`<div style="margin-bottom:20px">
+      <h3 style="font-size:12px;font-weight:700;color:var(--primary);border-right:4px solid ${d.color};padding-right:8px;margin-bottom:8px">${d.icon} ${d.name}</h3>
+      <div style="display:flex;gap:6px;margin-bottom:6px;flex-wrap:wrap">
+        <span style="background:#f0f4f8;padding:3px 10px;border-radius:6px;font-size:11px;font-weight:700">الإجمالي: ${dB.length}</span>
+        <span class="bdg bs">✅ ${dd}</span><span class="bdg bw">⏳ ${dp}</span>
+      </div>`;
+    if(dB.length){
+      html+=`<div style="overflow-x:auto"><table style="width:100%;font-size:10px">
+        <thead><tr>${['رقم','التاريخ','النوع','الجهة','الموضوع','الحالة'].map(h=>`<th style="background:#f8fafc;padding:6px 9px;text-align:right;border-bottom:2px solid var(--border)">${h}</th>`).join('')}</tr></thead>
+        <tbody>${dB.map(b=>`<tr>
+          <td style="padding:6px 9px;border-bottom:1px solid var(--border)">${b.num||'-'}</td>
+          <td style="padding:6px 9px;border-bottom:1px solid var(--border)">${b.date||'-'}</td>
+          <td style="padding:6px 9px;border-bottom:1px solid var(--border)">${b.type}</td>
+          <td style="padding:6px 9px;border-bottom:1px solid var(--border)">${b.party||'-'}</td>
+          <td style="padding:6px 9px;border-bottom:1px solid var(--border)">${b.subject||'-'}</td>
+          <td style="padding:6px 9px;border-bottom:1px solid var(--border)"><span class="sbdg s-${b.status?.replace(' ','-')}">${b.status}</span></td>
+        </tr>`).join('')}</tbody></table></div>`;
+    } else{html+=`<p style="color:var(--muted);font-size:11px;font-style:italic">لا توجد كتب</p>`;}
+    html+=`</div>`;
+  });
+  html+=`</div>`;
+  document.getElementById('reportContent').innerHTML=html;
+}
+
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);}
+
+// ── FILE VIEWER ──
+window.viewFile=function(type){
+  const fd=type==='orig'?origData:replyData;
+  if(!fd){toast('لا يوجد ملف');return;}
+  openFileViewer(fd);
+};
+window.viewFileById=function(bookId,type){
+  const b=books.find(x=>x.id===bookId);
+  if(!b)return;
+  const fd=type==='orig'?b.origFile:b.replyFile;
+  if(!fd){toast('لا يوجد ملف');return;}
+  openFileViewer(fd);
+};
+function openFileViewer(fd){
+  const isImg=fd.type.startsWith('image/');
+  const isPdf=fd.type==='application/pdf';
+  const ov=document.getElementById('fileViewerModal');
+  const body=document.getElementById('fvBody');
+  document.getElementById('fvTitle').textContent=fd.name;
+  if(isImg){
+    body.innerHTML=`<img src="${fd.data}" style="max-width:100%;max-height:70vh;border-radius:8px;display:block;margin:0 auto;">`;
+  } else if(isPdf){
+    body.innerHTML=`<iframe src="${fd.data}" style="width:100%;height:70vh;border:none;border-radius:8px;"></iframe>`;
+  } else {
+    body.innerHTML=`<div style="text-align:center;padding:40px;color:var(--muted)"><div style="font-size:48px">📄</div><p style="margin-top:12px">${fd.name}</p></div>`;
+  }
+  ov.classList.add('open');
+}
+window.closeFileViewer=function(){
+  document.getElementById('fileViewerModal').classList.remove('open');
+  document.getElementById('fvBody').innerHTML='';
+};
+document.getElementById('bookModal').addEventListener('click',e=>{if(e.target===document.getElementById('bookModal'))closeModal();});
+document.getElementById('detailModal').addEventListener('click',e=>{if(e.target===document.getElementById('detailModal'))closeDetail();});
+document.getElementById('fileViewerModal').addEventListener('click',e=>{if(e.target===document.getElementById('fileViewerModal'))closeFileViewer();});
+
+initFB();
+</script>
+</body>
+</html>
